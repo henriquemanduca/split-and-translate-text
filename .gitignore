@@ -10,6 +10,8 @@ __pycache__/
 getmymanga.db
 temp.json
 
+output/
+
 # Distribution / packaging
 .Python
 build/
