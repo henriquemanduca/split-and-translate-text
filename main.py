@@ -1,6 +1,18 @@
 import os
 import argparse
 
+def remove_duplicates(line):
+    result = []
+    words = line.split()
+    previous_word = None
+
+    for word in words:
+        if word != previous_word:
+            result.append(word)
+        previous_word = word
+
+    return ' '.join(result)
+
 
 def process_file(input_file, word_limit):
     """
@@ -13,7 +25,6 @@ def process_file(input_file, word_limit):
     Returns:
     tuple: Total number of lines and words processed.
     """
-
     output_dir = os.path.join(os.getcwd(), 'output')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -23,20 +34,36 @@ def process_file(input_file, word_limit):
     current_words = 0
     current_content = []
     file_counter = 1
+    previous_line_incomplete = False
 
     with open(input_file, 'r') as file:
         for line in file:
-            total_lines += 1
-            words = line.split()
-            total_words += len(words)
-            current_words += len(words)
-            current_content.append(line)
+            # Remove leading/trailing whitespace, including newline characters
+            line = line.strip()
+            if not line:
+                continue
 
-            if current_words >= word_limit:
+            total_lines += 1
+            checked_line = remove_duplicates(line)
+
+            words = checked_line.split()
+            total_words += len(words)
+
+            if previous_line_incomplete:
+                current_content[-1] = f'{current_content[-1].rstrip()} {checked_line.lstrip()}\n'
+                previous_line_incomplete = not (checked_line.rstrip().endswith('.') or checked_line.rstrip().endswith('"'))
+            else:
+                current_content.append(f'{checked_line}\n')
+                previous_line_incomplete = not (checked_line.rstrip().endswith('.') or checked_line.rstrip().endswith('"'))
+
+            current_words += len(words)
+
+            if current_words >= word_limit and not previous_line_incomplete:
                 save_file(output_dir, file_counter, current_content)
                 file_counter += 1
                 current_words = 0
                 current_content = []
+                previous_line_incomplete = False
 
     # Save any remaining content
     if current_content:
